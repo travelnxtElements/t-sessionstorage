@@ -72,7 +72,7 @@
 
 		attached: function(){
 			try{
-				window.sessionStorage.getItem123('test');
+				window.sessionStorage.setItem('test', 123);
 				this._setLocalStorageAvailable(true);				
 			}
 			catch(e){
@@ -95,7 +95,7 @@
 				return;
 
 			if(this.localStorageAvailable){
-				var v = window.localStorage.getItem(this.name);
+				var v = window.sessionStorage.getItem(this.key);
 				this._tryParseAndSetValue(v);				
 			} else{
 				if(window[this.key]){
@@ -115,10 +115,10 @@
 			if(this.localStorageAvailable){
 				var v = this.useRaw ? this.value : JSON.stringify(this.value);
 				if (this.value === null || this.value === undefined) {
-					window.localStorage.removeItem(this.name);
+					window.sessionStorage.removeItem(this.key);
 				} 
 				else {
-					window.localStorage.setItem(this.name, /** @type {string} */ (v));
+					window.sessionStorage.setItem(this.key, /** @type {string} */ (v));
 				}
 				this.fire('t-sessionstorage-save-success', { isLocal: this.localStorageAvailable});
 			}
