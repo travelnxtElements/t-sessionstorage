@@ -9,14 +9,25 @@
 
   <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
   <link rel="import" href="../t-sessionstorage.html">
+  <link rel="import" href="../../iron-meta/iron-meta.html">  
 </head>
-<body>
-    <t-sessionstorage></t-sessionstorage>
+<body>    
+    <t-sessionstorage key="testKey" use-raw></t-sessionstorage>
 </body>
 
 <script type="text/javascript">
-	sessionElem =  document.getElementsByTagName('t-sessionstorage')[0];
-	debugger;	
+	var comp = document.querySelector('t-sessionstorage');
+	comp.addEventListener('t-sessionstorage-load-success', function(){ alert('value loaded successfully');
+	});
+	comp.addEventListener('t-sessionstorage-load-error', function(){ alert('value loading failed');
+	});
+	
+	if(comp.localStorageAvailable){
+		window.sessionStorage.setItem(comp.key, 'testValue');
+		comp.load();
+	}
+	
+	
 </script>
 </html>
 

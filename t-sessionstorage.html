@@ -1,6 +1,33 @@
 <link rel="import" href="../polymer/polymer.html" />
 <link rel="import" href="../iron-ajax/iron-ajax.html" />
+<link rel="import" href="../iron-meta/iron-meta.html">
 
+<!--
+
+'t-sessionstorage' is a utitlity component to aid read and write session values. Primarly it uses HTML5 session storage for read / write but in case if HTML5 session storage it is not available, then it tries to read/write on server using the service provided through 'apiUrlFormat'. 
+
+<b>Example for HTML5 session storage</b>	
+
+		<t-sessionstorage key="testKey" auto></t-sessionstorage>
+		<script>
+			//to save
+			var comp = document.querySelector('t-sessionstorage');
+			comp.addEventListener('t-sessionstorage-save-success', function(){ //success handling });
+			comp.addEventListener('t-sessionstorage-save-error', function(){ //error handling });
+			comp.value = 'testValue';		
+			comp.save();
+		</script>
+
+<i>Performance measure to improve page load time if HTML5 session is not avaialbe </i></br>
+It checks value presence at window global scope before reading from server session on initial load, this comes in handy when HTML5 session is not availble and you dont want to impact performance of page load by making unnessary ajax calls. For this it used iron-meta to access global values. iron-meta type should be 'globals' and key should be same as one given for t-sessionstorage
+
+<b>Example for server session storage</b>	
+
+		<t-sessionstorage key="testKey" auto api-url-format="/someapi/SESSIONKEY" in-Progress={{loding}}></t-sessionstorage>
+		<iron-meta type="globals" key="testKey" value="testValue"></iron-meta>
+
+
+-->
 <dom-module id="t-sessionstorage">	
 	<template>		
         <iron-ajax id="ajaxComp" headers='{"accept": "application/json"}' content-type="application/json" handle-as="json" on-response="_ajaxSuccess" on-error="_ajaxError">
@@ -9,8 +36,43 @@
 </dom-module>
 
 <script>
+	var _tempMeta = null;
+
 	Polymer({
 		is: "t-sessionstorage",
+
+		/**
+		* Fired when value loads from Storage either local or not.
+		*
+		* @event t-sessionstorage-load-success
+		* @param {{isLocal:boolean}} detail -
+     	* isLocal: true if HTML5 session storage is supported
+		*/
+	
+		/**
+		* Fired when error in loading value from Storage either local or not.
+		*
+		* @event t-sessionstorage-load-fail
+		* @param {{isLocal:boolean}} detail -
+     	* isLocal: true if HTML5 session storage is supported
+		*/
+	
+		/**
+		* Fired when save value succeeds
+		*
+		* @event t-sessionstorage-save-success
+		* @param {{isLocal:boolean}} detail -
+     	* isLocal: true if HTML5 session storage is supported
+		*/
+	
+		/**
+		* Fired when save value fails
+		*
+		* @event t-sessionstorage-save-error
+		* @param {{isLocal:boolean}} detail -
+     	* isLocal: true if HTML5 session storage is supported
+		*/
+	
 
 		properties:{
 
@@ -33,7 +95,10 @@
 			/**
 		    * If true: do not convert value to JSON on save/load. Has no effect if no localStorage is available
 		    */
-		    useRaw: false,
+		    useRaw: {
+				type: Boolean,
+				value: false
+			},
 
 			/** 
 			* Flag to indicate whether already value is loaded or not from storage (either local or server) 
@@ -55,8 +120,7 @@
 			},
 
 			/**
-			 * If true: loads data upon initialization
-			 * @type {[type]}
+			 * If true: loads data upon initialization			 
 			 */
 			auto: Boolean,
 
@@ -83,6 +147,9 @@
 			}
 		},
 
+		/**
+		 * Loads value for give key from HTML5 session or server session based on session availability. Value will be JSON parsed if 'useRaw' is not set
+		 */
 		load: function(){
 			//if data is already set internally or from outside || is already an attempt made to load data but value is empty
 			if(this.value || this.loaded)
@@ -98,8 +165,8 @@
 				var v = window.sessionStorage.getItem(this.key);
 				this._tryParseAndSetValue(v);				
 			} else{
-				if(window[this.key]){
-					this._tryParseAndSetValue(window[this.key]);				
+				if(this._getIronMeta('globals').byKey(this.key)){
+					this._tryParseAndSetValue(this._getIronMeta('globals').byKey(this.key));				
 				}
 				else{
 					this.$.ajaxComp.method = 'GET';
@@ -111,6 +178,9 @@
 			}
 		},
 
+		/**
+		 * Save value for give key to HTML5 session or server session based on session availability. Value will be JSON parsed if 'useRaw' is not set
+		 */
 		save: function(){			
 			if(this.localStorageAvailable){
 				var v = this.useRaw ? this.value : JSON.stringify(this.value);
@@ -177,39 +247,16 @@
 			this._setInProgress(false);
 		},
 
+		_getIronMeta: function(type){
+			if(_tempMeta){
+			return _tempMeta;
+			}
+			else{
+			_tempMeta = new Polymer.IronMeta({type: type});
+			return _tempMeta;
+			}
+		},
 
-
-		/**
-		* Fired when value loads from Storage either local or not.
-		*
-		* @event t-sessionstorage-load-success
-		* @param {{isLocal:boolean}} detail -
-     	* isLocal: true if HTML5 session storage is supported
-		*/
-	
-		/**
-		* Fired when error in loading value from Storage either local or not.
-		*
-		* @event t-sessionstorage-load-fail
-		* @param {{isLocal:boolean}} detail -
-     	* isLocal: true if HTML5 session storage is supported
-		*/
-	
-		/**
-		* Fired when save value succeeds
-		*
-		* @event t-sessionstorage-save-success
-		* @param {{isLocal:boolean}} detail -
-     	* isLocal: true if HTML5 session storage is supported
-		*/
-	
-		/**
-		* Fired when save value fails
-		*
-		* @event t-sessionstorage-save-error
-		* @param {{isLocal:boolean}} detail -
-     	* isLocal: true if HTML5 session storage is supported
-		*/
 	});	
 </script>
 
