@@ -30,8 +30,10 @@ It checks value presence at window global scope before reading from server sessi
 -->
 <dom-module id="t-sessionstorage">	
 	<template>		
-        <iron-ajax id="ajaxComp" headers='{"accept": "application/json"}' content-type="application/json" handle-as="json" on-response="_ajaxSuccess" on-error="_ajaxError">
-        </iron-ajax>
+		<template is="dom-if" if="[[!localStorageAvailable]]">
+	        <iron-ajax id="ajaxComp" headers='{"accept": "application/json"}' content-type="application/json" handle-as="json" on-response="_ajaxSuccess" on-error="_ajaxError">
+	        </iron-ajax>
+	    </template>
     </template>
 </dom-module>
 
@@ -90,7 +92,10 @@ It checks value presence at window global scope before reading from server sessi
 			 * Session api url to use in case HTML5 session storage is not available
 			 * Use SESSIONKEY placeholder to update key in  url
 			 */
-			apiUrlFormat: String,			
+			apiUrlFormat: {
+				type: String,			
+				value: ''
+			},
 
 			/**
 		    * If true: do not convert value to JSON on save/load. Has no effect if no localStorage is available
@@ -169,9 +174,9 @@ It checks value presence at window global scope before reading from server sessi
 					this._tryParseAndSetValue(this._getIronMeta('globals').byKey(this.key));				
 				}
 				else{
-					this.$.ajaxComp.method = 'GET';
-					this.$.ajaxComp.url = this.apiUrlFormat.replace('SESSIONKEY', this.key);
-					this.$.ajaxComp.generateRequest();
+					this._getAjaxComp().method = 'GET';
+					this._getAjaxComp().url = this.apiUrlFormat.replace('SESSIONKEY', this.key);
+					this._getAjaxComp().generateRequest();
 
 					this._setInProgress(true);
 				}
@@ -194,10 +199,10 @@ It checks value presence at window global scope before reading from server sessi
 			}
 			else{
 				var v = JSON.stringify(this.value);
-				this.$.ajaxComp.method = 'POST';
-				this.$.ajaxComp.url = this.apiUrlFormat.replace('SESSIONKEY', this.key);
-				this.$.ajaxComp.body = v;
-				this.$.ajaxComp.generateRequest();
+				this._getAjaxComp().method = 'POST';
+				this._getAjaxComp().url = this.apiUrlFormat.replace('SESSIONKEY', this.key);
+				this._getAjaxComp().body = v;
+				this._getAjaxComp().generateRequest();
 
 				this._setInProgress(true);
 			}
@@ -225,7 +230,7 @@ It checks value presence at window global scope before reading from server sessi
 		_ajaxSuccess: function(e){
 			//method type check is required as two ajax componets are not added and same is using for both load and save
 			//This is only required to handle if someone triggers either of actions load or save while another is in progress
-			if(this.$.ajaxComp.method == 'GET' && e.detail){
+			if(this._getAjaxComp().method == 'GET' && e.detail){
 				this._tryParseAndSetValue(e.detail.response);
 			}
 			else{
@@ -237,7 +242,7 @@ It checks value presence at window global scope before reading from server sessi
 		_ajaxError: function(e){
 			//method type check is required as two ajax componets are not added and same is using for both load and save
 			//This is only required to handle if someone triggers either of actions load or save while another is in progress
-			if(this.$.ajaxComp.method == 'GET'){
+			if(this._getAjaxComp().method == 'GET'){
 				this.fire('t-sessionstorage-load-error', { isLocal: this.localStorageAvailable});
 				this.loaded = true;
 			}
@@ -256,6 +261,10 @@ It checks value presence at window global scope before reading from server sessi
 			return _tempMeta;
 			}
 		},
+
+		_getAjaxComp: function(){
+			return Polymer.dom(this.root).querySelector('#ajaxComp');
+		}
 
 	});	
 </script>
