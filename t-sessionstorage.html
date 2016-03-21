@@ -95,19 +95,18 @@
 				return;
 
 			if(this.localStorageAvailable){
-				var v = window.sessionStorage.getItem(this.key);
-				this._tryParseAndSetValue(v);				
+			    var v = window.sessionStorage.getItem(this.key);
+                if(v)
+                    this._tryParseAndSetValue(v);
+                else if(window[this.key]){
+                    this._tryParseAndSetValue(window[this.key]);
+                }
 			} else{
-				if(window[this.key]){
-					this._tryParseAndSetValue(window[this.key]);				
-				}
-				else{
-					this.$.ajaxComp.method = 'GET';
-					this.$.ajaxComp.url = this.apiUrlFormat.replace('SESSIONKEY', this.key);
-					this.$.ajaxComp.generateRequest();
+				this.$.ajaxComp.method = 'GET';
+				this.$.ajaxComp.url = this.apiUrlFormat.replace('SESSIONKEY', this.key);
+				this.$.ajaxComp.generateRequest();
 
-					this._setInProgress(true);
-				}
+				this._setInProgress(true);
 			}
 		},
 
@@ -136,7 +135,7 @@
 		_tryParseAndSetValue: function(data){
 			if(data){
 				//raw data or stringified data applies only in local storage case
-				if (this.localStorageAvailable && !this.useRaw) {
+				if (this.localStorageAvailable && !this.useRaw && !data.id) {
 					try { // parse value as JSON
 						data = JSON.parse(data);
 					} catch(x) {
