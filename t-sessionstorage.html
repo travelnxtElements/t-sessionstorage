@@ -159,6 +159,7 @@ Polymer({
     _ajaxSuccess: function(e) {
         //method type check is required as two ajax componets are not added and same is using for both load and save
         //This is only required to handle if someone triggers either of actions load or save while another is in progress
+        this._setInProgress(false);
         if (this.$.ajaxComp.method == 'GET' && e.detail) {
             this._tryParseAndSetValue(e.detail.response);
         } else {
@@ -166,12 +167,12 @@ Polymer({
                 isLocal: this.localStorageAvailable
             });
         }
-        this._setInProgress(false);
     },
 
     _ajaxError: function(e) {
         //method type check is required as two ajax componets are not added and same is using for both load and save
         //This is only required to handle if someone triggers either of actions load or save while another is in progress
+        this._setInProgress(false);
         if (this.$.ajaxComp.method == 'GET') {
             this.fire('t-sessionstorage-load-error', {
                 isLocal: this.localStorageAvailable
@@ -182,7 +183,6 @@ Polymer({
                 isLocal: this.localStorageAvailable
             });
         }
-        this._setInProgress(false);
     },
 
 
